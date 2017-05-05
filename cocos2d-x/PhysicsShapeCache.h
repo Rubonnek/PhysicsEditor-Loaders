@@ -57,6 +57,18 @@ public:
     bool addShapesWithFile(const std::string &plist);
 
     /**
+     * Adds all physics shapes from an encrypted plist file.
+     * Shapes are scaled by contentScaleFactor
+     *
+     * @param plist name of the shape definitions file to load
+     * @param decryptionKey string holding the key with which the plist was encrypted using xxtea
+     *
+     * @retval true if ok
+     * @retval false on error
+     */
+    bool addShapesWithEncryptedFile(const std::string &plist, const std::string &decryptionKey);
+
+    /**
      * Adds all physics shapes from a plist file.
      *
      * @param plist name of the shape definitions file to load
@@ -65,7 +77,7 @@ public:
      * @retval true if ok
      * @retval false on error
      */
-    bool addShapesWithFile(const std::string &plist, float scaleFactor);
+    bool addShapesWithFile(const std::string &plist, float scaleFactor, const std::string &decryptionKey = "");
 
     /**
      * Removes all shapes loaded from the given file

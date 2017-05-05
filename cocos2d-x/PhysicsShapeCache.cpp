@@ -28,6 +28,7 @@
 //
 
 #include "PhysicsShapeCache.h"
+#include <lib/xxtea/xxtea.h>
 
 
 PhysicsShapeCache::PhysicsShapeCache()
@@ -47,6 +48,11 @@ PhysicsShapeCache *PhysicsShapeCache::getInstance()
     return &instance;
 }
 
+bool PhysicsShapeCache::addShapesWithEncryptedFile(const std::string &plist, const std::string &decryptionKey)
+{
+    float scaleFactor = Director::getInstance()->getContentScaleFactor();
+    return addShapesWithFile(plist, scaleFactor, decryptionKey);
+}
 
 bool PhysicsShapeCache::addShapesWithFile(const std::string &plist)
 {
@@ -55,11 +61,25 @@ bool PhysicsShapeCache::addShapesWithFile(const std::string &plist)
 }
 
 
-bool PhysicsShapeCache::addShapesWithFile(const std::string &plist, float scaleFactor)
+bool PhysicsShapeCache::addShapesWithFile(const std::string &plist, float scaleFactor, const std::string &decryptionKey /* = "" */)
 {
     CCASSERT(bodiesInFile.find(plist) == bodiesInFile.end(), "file already loaded");
 
-    ValueMap dict = FileUtils::getInstance()->getValueMapFromFile(plist);
+    ValueMap dict;
+    if ( decryptionKey.empty() )
+    {
+        dict = FileUtils::getInstance()->getValueMapFromFile(plist);
+    }
+    else
+    {
+        cocos2d::Data data = FileUtils::getInstance()->getDataFromFile(plist);
+        xxtea_long decryptedLength;
+        unsigned char *decryptedPlist = xxtea_decrypt(data.getBytes(), data.getSize(), (unsigned char*)decryptionKey.c_str(), strlen(decryptionKey.c_str()), &decryptedLength);
+        dict = FileUtils::getInstance()->getValueMapFromData((const char*)decryptedPlist, decryptedLength);
+        data.clear();
+        free(decryptedPlist);
+    }
+
     if (dict.empty())
     {
         // plist file not found
@@ -171,7 +191,7 @@ PhysicsShapeCache::BodyDef *PhysicsShapeCache::getBodyDef(const std::string &nam
     catch(std::out_of_range&)
     {
     }
-    
+
     return nullptr;
 }
 
